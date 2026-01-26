@@ -7,6 +7,11 @@ multipass launch -n vm03 -m 2Gb -d 50Gb -c 2
 multipass launch -n vm04 -m 2Gb -d 50Gb -c 2
 multipass launch -n vm05 -m 2Gb -d 50Gb -c 2
 
+multipass launch -n vm06 -m 2Gb -d 50Gb -c 2
+multipass launch -n vm07 -m 2Gb -d 50Gb -c 2
+multipass launch -n vm08 -m 2Gb -d 50Gb -c 2
+
+
 # overlay vxlan
 multipass list --format=json | jq '.list[] | {"ip": ( .ipv4 | select( .[] | test("^10\\.0") | not) | .[0] ), "name": .name} | select(.name | test("^vm"))' > ips.json
 
@@ -34,18 +39,14 @@ multipass exec vm02 -- sudo ip addr add 10.0.0.12/24 dev vxlan100
 
 # tc
 
-multipass exec vm00 -- sudo tc qdisc del dev vxlan100 root netem delay 5ms 5ms loss 1% 25%
-
-multipass exec vm00 -- sudo tc qdisc add dev vxlan100 root netem delay 5ms 5ms loss 0% 0%
-multipass exec vm01 -- sudo tc qdisc add dev vxlan100 root netem delay 5ms 5ms loss 0% 0%
 multipass exec vm02 -- sudo tc qdisc add dev vxlan100 root netem delay 5ms 5ms loss 0% 0%
 
-
-
+## Optional
+```
 multipass exec vm00 -- sudo tc qdisc show dev vxlan100
 multipass exec vm02 -- sudo tc qdisc show dev vxlan100
-
 sudo tcpdump -i vxlan100 icmp -tttt
+```
 
 # second overlay
 
@@ -99,5 +100,3 @@ multipass exec vm05 -- sudo ip route add 10.0.0.0/24 via 10.0.1.13
 
 multipass exec vm02 -- sudo sysctl -w net.ipv4.ip_forward=1
 multipass exec vm03 -- sudo sysctl -w net.ipv4.ip_forward=1
-
-tcpdump -i vxlan100
